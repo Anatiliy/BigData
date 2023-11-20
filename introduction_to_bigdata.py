@@ -1,26 +1,26 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import subprocess
 
 # Список городов
-cities = ["москва"]
+cities = ["Berlin", "Moscow"]
 
-api_token ='56b30cb255.3443075'
-headers = {
-    'X-Gismeteo-Token': api_token,
-    'Accept-Encoding': 'gzip'
-    }
 
 # Создание пустого DataFrame для хранения погодных данных
 weather_data = pd.DataFrame(columns=["City", "Date", "Temperature"])
 
 # Запрос погодных данных для каждого города
 for city in cities:
-    
-    response = requests.get(f'https://api.gismeteo.net/v2/weather/current/4368/?lang=ru&query={city}', headers=headers)
-    print(response)
+    # запрашиваем коородинаты
+    response = requests.get(f'https://geocoding-api.open-meteo.com/v1/search?name={city}&count=1&language=en&format=json').json()
+    print(response['results'][0]['latitude'])
+    print(response['results'][0]['longitude'])
+
+
+
+
     
     # Извлечение дат и температур из HTML-страницы
     # dates = []
