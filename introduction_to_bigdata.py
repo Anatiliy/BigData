@@ -72,26 +72,26 @@ print(weather_data)
 
 
 # График изменения температуры в разных городах
-# plt.figure(figsize=(10, 6))
-# for city in cities:
-#     city_data = weather_data[weather_data["city"] == city]
-#     plt.plot(city_data["date"], city_data["temperature"], label=city)
-#     plt.xlabel("Date")
-#     plt.ylabel("Temperature (°C)")
-#     plt.title("Temperature Change in Different Cities")
-#     plt.legend()
-#     plt.show()
+plt.figure(figsize=(10, 6))
+for city in cities:
+    city_data = weather_data[weather_data["city"] == city]
+    plt.plot(city_data["date"], city_data["temperature"], label=city)
+    plt.xlabel("Date")
+    plt.ylabel("Temperature (°C)")
+    plt.title("Temperature Change in Different Cities")
+    plt.legend()
+    plt.show()
 
 # График распределения температуры
-# plt.figure(figsize=(8, 6))
-# plt.hist(weather_data["temperature"], bins=20)
-# plt.xlabel("Temperature (°C)")
-# plt.ylabel("Frequency")
-# plt.title("Temperature Distribution")
-# plt.show()
+plt.figure(figsize=(8, 6))
+plt.hist(weather_data["temperature"], bins=20)
+plt.xlabel("Temperature (°C)")
+plt.ylabel("Frequency")
+plt.title("Temperature Distribution")
+plt.show()
 
 # Сохранение данных в HDFS
-hdfs_path = "localhost:9870//hdfs/weather_data.csv"
+hdfs_path = "/path/to/hdfs/weather_data.csv"
 weather_data.to_csv(hdfs_path, index=False)
 
 # Выгрузка данных из HDFS на локальный компьютер
