@@ -1,7 +1,6 @@
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import subprocess
 import openmeteo_requests
 import requests_cache
@@ -13,14 +12,14 @@ import datetime
 cities = ["Berlin", "Moscow"]
 
 # определяем даты запроса
-end_date = datetime.datetime.now().date()
-start_date = end_date - datetime.timedelta(30)
+end_date = datetime.datetime.now().date() - datetime.timedelta(2)
+start_date = end_date - datetime.timedelta(32)
 print(end_date)
 print(start_date)
 
 
 # Создание пустого DataFrame для хранения погодных данных
-weather_data = pd.DataFrame(columns=["City", "Date", "Temperature"])
+weather_data = pd.DataFrame(columns=["city", "date", "temperature"])
 
 # Запрос погодных данных для каждого города
 for city in cities:
@@ -29,13 +28,10 @@ for city in cities:
     latitude = response['results'][0]['latitude']
     longitude = response['results'][0]['longitude']
 
-    # Setup the Open-Meteo API client with cache and retry on error
+    # определяем параметры API запроса 
     cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
     retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
     openmeteo = openmeteo_requests.Client(session = retry_session)
-
-    # Make sure all required weather variables are listed here
-    # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
         "latitude": latitude,
@@ -55,7 +51,7 @@ for city in cities:
 
     # Process hourly data. The order of variables needs to be the same as requested.
     hourly = response.Hourly()
-    print(hourly)
+    print('11111', hourly)
     hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
 
     hourly_data = {"date": pd.date_range(
@@ -64,56 +60,40 @@ for city in cities:
         freq = pd.Timedelta(seconds = hourly.Interval()),
         inclusive = "left"
     )}
-    hourly_data["temperature_2m"] = hourly_temperature_2m
+    hourly_data["temperature"] = hourly_temperature_2m
 
     hourly_dataframe = pd.DataFrame(data = hourly_data)
+    city_list = [city] * 33 * 24
+    hourly_dataframe.insert (loc= 0, column='city', value=city_list)
     print(hourly_dataframe)
+    weather_data = weather_data._append(hourly_dataframe, ignore_index=True)
 
+print(weather_data)
 
-    
-    # Извлечение дат и температур из HTML-страницы
-    # dates = []
-    # temperatures = []
-    
-    # date_elements = soup.select(".date")
-    # temperature_elements = soup.select(".t_0")
-    
-    # for date_element, temperature_element in zip(date_elements, temperature_elements):
-    #     date = pd.to_datetime(date_element.text, format="%d.%m.%Y")
-    #     temperature = float(temperature_element.text.replace("°C", "").replace(",", "."))
-        
-    #     dates.append(date)
-    #     temperatures.append(temperature)
-    
-    # Добавление данных в DataFrame
-#     city_weather_data = pd.DataFrame({"City": city, "Date": dates, "Temperature": temperatures})
-#     weather_data = weather_data._append(city_weather_data, ignore_index=True)
-
-# print(list(weather_data["City"]))
 
 # График изменения температуры в разных городах
-#plt.figure(figsize=(10, 6))
-#for city in cities:
-    #city_data = weather_data[weather_data["City"] == city]
-    #plt.plot(city_data["Date"], city_data["Temperature"], label=city)
-    #plt.xlabel("Date")
-    #plt.ylabel("Temperature (°C)")
-    #plt.title("Temperature Change in Different Cities")
-    #plt.legend()
-    #plt.show()
+# plt.figure(figsize=(10, 6))
+# for city in cities:
+#     city_data = weather_data[weather_data["city"] == city]
+#     plt.plot(city_data["date"], city_data["temperature"], label=city)
+#     plt.xlabel("Date")
+#     plt.ylabel("Temperature (°C)")
+#     plt.title("Temperature Change in Different Cities")
+#     plt.legend()
+#     plt.show()
 
 # График распределения температуры
 # plt.figure(figsize=(8, 6))
-# plt.hist(weather_data["Temperature"], bins=20)
+# plt.hist(weather_data["temperature"], bins=20)
 # plt.xlabel("Temperature (°C)")
 # plt.ylabel("Frequency")
 # plt.title("Temperature Distribution")
 # plt.show()
 
 # Сохранение данных в HDFS
-#hdfs_path = "/path/to/hdfs/weather_data.csv"
-#weather_data.to_csv(hdfs_path, index=False)
+hdfs_path = "localhost:9870//hdfs/weather_data.csv"
+weather_data.to_csv(hdfs_path, index=False)
 
 # Выгрузка данных из HDFS на локальный компьютер
-#local_path = "/path/to/local/weather_data.csv"
-#subprocess.run(["hdfs", "dfs", "-get", hdfs_path, local_path])
+local_path = "/path/to/local/weather_data.csv"
+subprocess.run(["hdfs", "dfs", "-get", hdfs_path, local_path])
